@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://src/player/player.gd" type="Script" id=1]
+
+[sub_resource type="BoxShape" id=1]
+extents = Vector3( 0.383, 0.648, 0.383 )
+
+[node name="Player" type="KinematicBody"]
+script = ExtResource( 1 )
+
+[node name="CollisionHull" type="CollisionShape" parent="."]
+shape = SubResource( 1 )
+
+[node name="Head" type="Spatial" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.414, 0 )
+
+[node name="Camera" type="Camera" parent="Head"]
+
+[node name="CoyoteTimer" type="Timer" parent="."]
+wait_time = 0.05
+one_shot = true
