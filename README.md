@@ -4,7 +4,7 @@ This character controller is inspired by the Source engine and it's heritage
 (GoldSrc, Quake, and even Doom), and has similar features like:
 - Crouch jumping
 - Air strafing
-- Surfing (Not yet, but almost)
+- Surfing
 
 
 ## Things I might add

@@ -16,11 +16,12 @@ export var crouch_height: float = 0.98438 # 63hu
 export var stand_height: float = 1.29688 # 83hu
 export var crouch_time: float = 0.2
 export var snap_distance: float = 0.125
+export var max_floor_angle: float = PI/4
 
 export var max_speed: float = 4.6875 # 300hu
 export var accel: float = max_speed * 10
 export var max_air_speed: float = 1
-export var air_accel: float = accel
+export var air_accel: float = 15
 export var friction: float = max_speed * 2
 # I couldn't find exactly what this should be, but the player needs to be able
 # to jump up 70hu (1.09u) with crouching, 50hu (0.78u) without.
@@ -106,7 +107,8 @@ func _physics_process(delta: float) -> void:
 	var snap: Vector3 = -self.get_floor_normal() * snap_distance
 
 
-	if self.is_on_floor():
+	# if the floor is too steep use air movement (slide off / surfing)
+	if self.is_on_floor() and self.get_floor_angle() <= max_floor_angle:
 		_coyote_mode = true
 	if not self.is_on_floor() and _coyote_mode and coyote_timer.is_stopped():
 		coyote_timer.start()
@@ -149,6 +151,7 @@ func _physics_process(delta: float) -> void:
 		if input == Vector3.ZERO and vel_flat.length() < fric_force.length()/2:
 			_vel.x = 0
 			_vel.z = 0
+
 	else: # Air Movement
 		var proj = _vel.project(wish_dir)
 		var is_away = wish_dir.dot(proj) <= 0
@@ -185,8 +188,9 @@ func _physics_process(delta: float) -> void:
 		get_tree().create_tween().tween_property(hull, "translation",
 			Vector3.ZERO, crouch_time)
 
+
 	if not _coyote_mode:
 		_vel += get_gravity() * delta
 
-	# _vel = self.move_and_slide(_vel, Vector3.UP, true)
-	_vel = self.move_and_slide_with_snap(_vel, snap, Vector3.UP, true)
+	_vel = self.move_and_slide_with_snap(
+		_vel, snap, Vector3.UP, true, 4, max_floor_angle)
