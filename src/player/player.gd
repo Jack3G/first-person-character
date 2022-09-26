@@ -136,7 +136,7 @@ func _physics_process(delta: float) -> void:
 
 
 	if Input.is_action_just_pressed("jump") and _coyote_mode:
-		_vel.y += jump_power
+		_vel.y = jump_power
 		snap = Vector3.ZERO
 		_coyote_mode = false # so they don't get a boost from jump
 
