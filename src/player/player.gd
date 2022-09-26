@@ -15,15 +15,19 @@ export var axis_align_hull: bool = true
 export var crouch_height: float = 0.98438 # 63hu
 export var stand_height: float = 1.29688 # 83hu
 export var crouch_time: float = 0.2
+export var snap_distance: float = 0.125
 
 export var max_speed: float = 4.6875 # 300hu
 export var accel: float = max_speed * 10
+export var max_air_speed: float = 1
+export var air_accel: float = accel
 export var friction: float = max_speed * 2
 # I couldn't find exactly what this should be, but the player needs to be able
 # to jump up 70hu (1.09u) with crouching, 50hu (0.78u) without.
 export var jump_power: float = 4.45
 # export var coyote_time: float = 0.05 # set in the timer
-export var snap_distance: float = 0.125
+export var crouch_speed_modifier: float = 0.33
+export var backward_speed_modifier: float = 0.9
 
 export var sensitivity: float = 0.002
 # irl you can look a bit past straight up and down ¯\_(ツ)_/¯
@@ -118,21 +122,48 @@ func _physics_process(delta: float) -> void:
 	var wish_dir = (input.x * self.transform.basis.x
 		+ input.z * self.transform.basis.z).normalized()
 
-	# how far the player might move this frame
-	var frame_move = wish_dir * accel * delta
+	# i thought it was a good idea to keep wish_dir normalized
+	var norm_input = input.normalized()
+	var scaled_wish_dir = (
+		norm_input.x * self.transform.basis.x
+		+ norm_input.z * self.transform.basis.z * (
+			backward_speed_modifier if input.z > 0 else 1.0)
+		) * (crouch_speed_modifier if _crouching else 1.0)
 
-	# ignore if player is going too fast, and they are trying to go faster (
-	# the `dot <= 0` bit )
-	if vel_flat.length() < max_speed or vel_flat.dot(wish_dir) <= 0:
-		_vel += frame_move
+
+	# Ground Movement
+	if _coyote_mode:
+		# how far the player might move this frame
+		var frame_move = scaled_wish_dir * accel * delta
+
+		# ignore if player is going too fast, and they are trying to go faster (
+		# the `dot <= 0` bit )
+		if vel_flat.length() < max_speed or vel_flat.dot(wish_dir) <= 0:
+			_vel += frame_move
 
 
-	var fric_force = vel_flat * friction * delta * -1
-	_vel += fric_force
-	# this stops the player from sliding around when they're close to 0 vel
-	if input == Vector3.ZERO and vel_flat.length() < fric_force.length()/2:
-		_vel.x = 0
-		_vel.z = 0
+		var fric_force = vel_flat * friction * delta * -1
+		_vel += fric_force
+
+		# this stops the player from sliding around when they're close to 0 vel
+		if input == Vector3.ZERO and vel_flat.length() < fric_force.length()/2:
+			_vel.x = 0
+			_vel.z = 0
+	else: # Air Movement
+		var proj = _vel.project(wish_dir)
+		var is_away = wish_dir.dot(proj) <= 0
+
+		if proj.length() < max_air_speed or is_away:
+			var vel_added = wish_dir * air_accel * delta
+
+			if is_away:
+				vel_added = vel_added.limit_length(
+					max_air_speed + proj.length())
+			else:
+				vel_added = vel_added.limit_length(
+					max_air_speed - proj.length())
+
+			_vel += vel_added
 
 
 	if Input.is_action_just_pressed("jump") and _coyote_mode:
