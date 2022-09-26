@@ -10,6 +10,8 @@ extends KinematicBody
 # height/2)
 
 
+# I think this causes a bug where you cant jump sometimes while walking into
+# walls.
 export var axis_align_hull: bool = true
 #export var view_height: float = 68/32 setget set_view_height
 export var crouch_height: float = 0.98438 # 63hu

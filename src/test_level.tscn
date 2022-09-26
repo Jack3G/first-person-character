@@ -135,3 +135,12 @@ transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -8.89891, 0.792356, 8.99667 )
 use_collision = true
 width = 4.8
 height = 0.8
+
+[node name="Info" type="Label3D" parent="Surf"]
+transform = Transform( -3.34849e-08, 2.98023e-08, 1, -2.80971e-08, 1, -2.98023e-08, -1, -2.80971e-08, -3.34849e-08, -8.6, 4.9, 3 )
+pixel_size = 0.03
+billboard = 2
+modulate = Color( 0, 0, 0, 1 )
+text = "You need to increase air accel to surf properly, as usual."
+autowrap = true
+width = 200.0
