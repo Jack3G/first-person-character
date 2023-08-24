@@ -1,4 +1,4 @@
-extends KinematicBody
+extends CharacterBody3D
 
 # One godot unit is 64 hammer units
 
@@ -12,40 +12,37 @@ extends KinematicBody
 
 # I think this causes a bug where you cant jump sometimes while walking into
 # walls.
-export var axis_align_hull: bool = true
+@export var axis_align_hull: bool = true
 #export var view_height: float = 68/32 setget set_view_height
-export var crouch_height: float = 0.98438 # 63hu
-export var stand_height: float = 1.29688 # 83hu
-export var crouch_time: float = 0.2
-export var snap_distance: float = 0.125
-export var max_floor_angle: float = PI/4
+@export var crouch_height: float = 0.98438 # 63hu
+@export var stand_height: float = 1.29688 # 83hu
+@export var crouch_time: float = 0.1
 
-export var max_speed: float = 4.6875 # 300hu
-export var accel: float = max_speed * 10
-export var max_air_speed: float = 1
-export var air_accel: float = 15
-export var friction: float = max_speed * 2
+@export var max_speed: float = 4.6875 # 300hu
+@export var accel: float = max_speed * 10
+@export var max_air_speed: float = 1
+@export var air_accel: float = 15
+@export var friction: float = max_speed * 2
 # I couldn't find exactly what this should be, but the player needs to be able
 # to jump up 70hu (1.09u) with crouching, 50hu (0.78u) without.
-export var jump_power: float = 4.45
+@export var jump_power: float = 4.45
 # export var coyote_time: float = 0.05 # set in the timer
-export var crouch_speed_modifier: float = 0.33
-export var backward_speed_modifier: float = 0.9
+@export var crouch_speed_modifier: float = 0.33
+@export var backward_speed_modifier: float = 0.9
 
-export var sensitivity: float = 0.002
+@export var sensitivity: float = 0.002
 # irl you can look a bit past straight up and down ¯\_(ツ)_/¯
-export var camera_max_angle: float = (PI/2)*1.05
-export var camera_min_angle: float = (-PI/2)*1.05
+@export var camera_max_angle: float = (PI/2)*1.05
+@export var camera_min_angle: float = (-PI/2)*1.05
 
-var _vel: Vector3 = Vector3.ZERO
 var _crouching: bool = false
 # This isn't full coyote time, it's just supposed to help when walking down
 # slopes, etc. Can be used as a replacement for is_on_floor
 var _coyote_mode: bool = false
 
-onready var head: Spatial = $Head
-onready var hull: CollisionShape = $CollisionHull
-onready var coyote_timer: Timer = $CoyoteTimer
+@onready var head: Node3D = $Head
+@onready var hull: CollisionShape3D = $CollisionHull
+@onready var coyote_timer: Timer = $CoyoteTimer
 
 
 func _on_coyote_timer_timeout() -> void:
@@ -54,11 +51,11 @@ func _on_coyote_timer_timeout() -> void:
 
 # From the character's feet
 func set_view_height(value: float) -> void:
-	var feet = hull.translation.y
+	var feet = hull.position.y
 
-	if hull.shape is BoxShape:
-		feet -= hull.shape.extents.y
-		head.translation.y = feet + value
+	if hull.shape is BoxShape3D:
+		feet -= hull.shape.size.y
+		head.position.y = feet + value
 
 
 # I set the gravity to 800 hu/s = 12.5 u/s
@@ -79,11 +76,11 @@ func get_input() -> Vector3:
 
 
 func _ready() -> void:
-	assert(hull.shape is BoxShape, "expected a BoxShape in the collision hull")
+	assert(hull.shape is BoxShape3D, "expected a BoxShape3D in the collision hull")
 	set_view_height(68/64)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
-	coyote_timer.connect("timeout", self, "_on_coyote_timer_timeout")
+	coyote_timer.connect("timeout", Callable(self, "_on_coyote_timer_timeout"))
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -104,13 +101,11 @@ func _process(delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	var input: Vector3 = get_input()
 	# pretty obvious, used for horizontal speed and stuff
-	var vel_flat: Vector3 = Vector3(_vel.x, 0, _vel.z)
-	# snapping to slopes (otherwise changing direction will throw you off)
-	var snap: Vector3 = -self.get_floor_normal() * snap_distance
+	var vel_flat: Vector3 = Vector3(self.velocity.x, 0, self.velocity.z)
 
 
 	# if the floor is too steep use air movement (slide off / surfing)
-	if self.is_on_floor() and self.get_floor_angle() <= max_floor_angle:
+	if self.is_on_floor() and self.get_floor_angle() <= self.floor_max_angle:
 		_coyote_mode = true
 	if not self.is_on_floor() and _coyote_mode and coyote_timer.is_stopped():
 		coyote_timer.start()
@@ -143,19 +138,19 @@ func _physics_process(delta: float) -> void:
 		# ignore if player is going too fast, and they are trying to go faster (
 		# the `dot <= 0` bit )
 		if vel_flat.length() < max_speed or vel_flat.dot(wish_dir) <= 0:
-			_vel += frame_move
+			self.velocity += frame_move
 
 
 		var fric_force = vel_flat * friction * delta * -1
-		_vel += fric_force
+		self.velocity += fric_force
 
 		# this stops the player from sliding around when they're close to 0 vel
 		if input == Vector3.ZERO and vel_flat.length() < fric_force.length()/2:
-			_vel.x = 0
-			_vel.z = 0
+			self.velocity.x = 0
+			self.velocity.z = 0
 
 	else: # Air Movement
-		var proj = _vel.project(wish_dir)
+		var proj = self.velocity.project(wish_dir)
 		var is_away = wish_dir.dot(proj) <= 0
 
 		if proj.length() < max_air_speed or is_away:
@@ -168,31 +163,30 @@ func _physics_process(delta: float) -> void:
 				vel_added = vel_added.limit_length(
 					max_air_speed - proj.length())
 
-			_vel += vel_added
+			self.velocity += vel_added
 
 
 	if Input.is_action_just_pressed("jump") and _coyote_mode:
-		_vel.y = jump_power
-		snap = Vector3.ZERO
+		self.velocity.y = jump_power
+		self.floor_snap_length = 0
 		_coyote_mode = false # so they don't get a boost from jump
 
 	if Input.is_action_pressed("crouch") and not _crouching:
 		_crouching = true
 		get_tree().create_tween().tween_property(
-			hull, "shape:extents:y", crouch_height/2, crouch_time)
-		get_tree().create_tween().tween_property(hull, "translation",
+			hull, "shape:size:y", crouch_height/2, crouch_time)
+		get_tree().create_tween().tween_property(hull, "position",
 			Vector3(0, (stand_height-crouch_height)/2, 0), crouch_time)
 
 	if (not Input.is_action_pressed("crouch")) and _crouching:
 		_crouching = false
 		get_tree().create_tween().tween_property(
-			hull, "shape:extents:y", stand_height/2, crouch_time)
-		get_tree().create_tween().tween_property(hull, "translation",
+			hull, "shape:size:y", stand_height/2, crouch_time)
+		get_tree().create_tween().tween_property(hull, "position",
 			Vector3.ZERO, crouch_time)
 
 
 	if not _coyote_mode:
-		_vel += get_gravity() * delta
+		self.velocity += get_gravity() * delta
 
-	_vel = self.move_and_slide_with_snap(
-		_vel, snap, Vector3.UP, true, 4, max_floor_angle)
+	self.move_and_slide()
