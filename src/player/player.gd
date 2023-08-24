@@ -23,14 +23,16 @@ extends CharacterBody3D
 @export var max_air_speed: float = 1
 @export var air_accel: float = 15
 @export var friction: float = max_speed * 2
+@export var snap_distance: float = 0.125
 # I couldn't find exactly what this should be, but the player needs to be able
 # to jump up 70hu (1.09u) with crouching, 50hu (0.78u) without.
-@export var jump_power: float = 4.45
+@export var jump_power: float = 4.55
 # export var coyote_time: float = 0.05 # set in the timer
 @export var crouch_speed_modifier: float = 0.33
 @export var backward_speed_modifier: float = 0.9
+@export var auto_bhop: bool = true
 
-@export var sensitivity: float = 0.002
+@export var sensitivity: float = 0.001
 # irl you can look a bit past straight up and down ¯\_(ツ)_/¯
 @export var camera_max_angle: float = (PI/2)*1.05
 @export var camera_min_angle: float = (-PI/2)*1.05
@@ -54,7 +56,7 @@ func set_view_height(value: float) -> void:
 	var feet = hull.position.y
 
 	if hull.shape is BoxShape3D:
-		feet -= hull.shape.size.y
+		feet -= hull.shape.size.y/2
 		head.position.y = feet + value
 
 
@@ -102,6 +104,7 @@ func _physics_process(delta: float) -> void:
 	var input: Vector3 = get_input()
 	# pretty obvious, used for horizontal speed and stuff
 	var vel_flat: Vector3 = Vector3(self.velocity.x, 0, self.velocity.z)
+	self.floor_snap_length = snap_distance
 
 
 	# if the floor is too steep use air movement (slide off / surfing)
@@ -156,17 +159,14 @@ func _physics_process(delta: float) -> void:
 		if proj.length() < max_air_speed or is_away:
 			var vel_added = wish_dir * air_accel * delta
 
-			if is_away:
-				vel_added = vel_added.limit_length(
-					max_air_speed + proj.length())
-			else:
-				vel_added = vel_added.limit_length(
-					max_air_speed - proj.length())
+			vel_added = vel_added.limit_length(
+				max_air_speed + proj.length() * (int(is_away)*2 - 1))
 
 			self.velocity += vel_added
 
 
-	if Input.is_action_just_pressed("jump") and _coyote_mode:
+	if _coyote_mode and (Input.is_action_just_pressed("jump") or
+			auto_bhop and Input.is_action_pressed("jump")):
 		self.velocity.y = jump_power
 		self.floor_snap_length = 0
 		_coyote_mode = false # so they don't get a boost from jump
@@ -174,14 +174,14 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_pressed("crouch") and not _crouching:
 		_crouching = true
 		get_tree().create_tween().tween_property(
-			hull, "shape:size:y", crouch_height/2, crouch_time)
+			hull, "shape:size:y", crouch_height, crouch_time)
 		get_tree().create_tween().tween_property(hull, "position",
 			Vector3(0, (stand_height-crouch_height)/2, 0), crouch_time)
 
 	if (not Input.is_action_pressed("crouch")) and _crouching:
 		_crouching = false
 		get_tree().create_tween().tween_property(
-			hull, "shape:size:y", stand_height/2, crouch_time)
+			hull, "shape:size:y", stand_height, crouch_time)
 		get_tree().create_tween().tween_property(hull, "position",
 			Vector3.ZERO, crouch_time)
 
