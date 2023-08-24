@@ -1,19 +1,18 @@
 # First Person Character Controller
 
 This character controller is inspired by the Source engine and it's heritage
-(GoldSrc, Quake, and even Doom), and has similar features like:
+(GoldSrc, Quake, etc.), and has similar features like:
 - Crouch jumping
 - Air strafing
 - Surfing
 
+Currently updated to Godot 4.1.
 
-## Things I might add
+This version feels a bit strange, surfing doesn't work properly. If you want to
+see what the original version was like, go back to commit 6af3ceb (using godot
+3). I'll see if I can improve this one though.
 
-### The shooting part
-An items/weapons system, projectiles, hitscan, damage types, that sort of thing.
-
-### Multiplayer
-A client / server system. Both client and server would be in the same project to
-avoid duplicate code and assets, like [this][multiplayer example].
-
-[multiplayer example]: https://github.com/Wavesonics/GodotClientServer
+Sometimes I just want to open tf2 and jump around, but it often takes 20 to 30
+minutes for me to open steam, open tf2, and actually join a server. When I
+eventually force myself to work on this, hopefully it can be a replacement for
+that.
