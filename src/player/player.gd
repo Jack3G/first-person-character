@@ -183,7 +183,7 @@ func _physics_process(delta: float) -> void:
 
 	if _coyote_mode and (Input.is_action_just_pressed("jump") or
 			auto_bhop and Input.is_action_pressed("jump")):
-		self.velocity.y = jump_power
+		self.velocity.y += jump_power
 		self.floor_snap_length = 0
 		_coyote_mode = false # so they don't get a boost from jump
 
