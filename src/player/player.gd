@@ -31,6 +31,7 @@ extends CharacterBody3D
 @export var crouch_speed_modifier: float = 0.33
 @export var backward_speed_modifier: float = 0.9
 @export var auto_bhop: bool = true
+@export var no_friction_on_bhop: bool = true
 
 @export var sensitivity: float = 0.001
 # irl you can look a bit past straight up and down ¯\_(ツ)_/¯
@@ -41,6 +42,7 @@ var _crouching: bool = false
 # This isn't full coyote time, it's just supposed to help when walking down
 # slopes, etc. Can be used as a replacement for is_on_floor
 var _coyote_mode: bool = false
+var _on_floor_last_frame: bool = false
 
 @onready var head: Node3D = $Head
 @onready var hull: CollisionShape3D = $CollisionHull
@@ -148,9 +150,9 @@ func _physics_process(delta: float) -> void:
 		if vel_flat.length() < max_speed or vel_flat.dot(wish_dir) <= 0:
 			self.velocity += frame_move
 
-
 		var fric_force = vel_flat * friction * delta * -1
-		self.velocity += fric_force
+		if not no_friction_on_bhop or _on_floor_last_frame:
+			self.velocity += fric_force
 
 		# this stops the player from sliding around when they're close to 0 vel
 		if input == Vector3.ZERO and vel_flat.length() < fric_force.length()/2:
@@ -208,5 +210,7 @@ func _physics_process(delta: float) -> void:
 
 	if not _coyote_mode:
 		self.velocity += get_gravity() * delta
+
+	_on_floor_last_frame = _coyote_mode
 
 	self.move_and_slide()
