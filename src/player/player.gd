@@ -46,6 +46,9 @@ var _coyote_mode: bool = false
 @onready var hull: CollisionShape3D = $CollisionHull
 @onready var coyote_timer: Timer = $CoyoteTimer
 
+@onready var speed_label_int: Label = %SpeedLabelInt
+@onready var speed_label_fract: Label = %SpeedLabelFract
+
 
 func _on_coyote_timer_timeout() -> void:
 	_coyote_mode = false
@@ -79,7 +82,7 @@ func get_input() -> Vector3:
 
 func _ready() -> void:
 	assert(hull.shape is BoxShape3D, "expected a BoxShape3D in the collision hull")
-	set_view_height(68/64)
+	set_view_height(68.0/64.0)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 	coyote_timer.connect("timeout", Callable(self, "_on_coyote_timer_timeout"))
@@ -105,6 +108,12 @@ func _physics_process(delta: float) -> void:
 	# pretty obvious, used for horizontal speed and stuff
 	var vel_flat: Vector3 = Vector3(self.velocity.x, 0, self.velocity.z)
 	self.floor_snap_length = snap_distance
+
+
+	var speed: float = snappedf(vel_flat.length(), 0.01)
+	var speed_int_part: float = floorf(speed)
+	speed_label_int.text = str(speed_int_part)
+	speed_label_fract.text = str(floorf((speed - speed_int_part)*100))
 
 
 	# if the floor is too steep use air movement (slide off / surfing)
