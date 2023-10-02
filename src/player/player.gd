@@ -48,6 +48,8 @@ var _coyote_mode: bool = false
 
 @onready var speed_label_int: Label = %SpeedLabelInt
 @onready var speed_label_fract: Label = %SpeedLabelFract
+@onready var speed_lost: ProgressBar = %SpeedLost
+@onready var speed_gained: ProgressBar = %SpeedGained
 
 
 func _on_coyote_timer_timeout() -> void:
@@ -110,12 +112,6 @@ func _physics_process(delta: float) -> void:
 	self.floor_snap_length = snap_distance
 
 
-	var speed: float = snappedf(vel_flat.length(), 0.01)
-	var speed_int_part: float = floorf(speed)
-	speed_label_int.text = str(speed_int_part)
-	speed_label_fract.text = str(floorf((speed - speed_int_part)*100))
-
-
 	# if the floor is too steep use air movement (slide off / surfing)
 	if self.is_on_floor() and self.get_floor_angle() <= self.floor_max_angle:
 		_coyote_mode = true
@@ -168,8 +164,17 @@ func _physics_process(delta: float) -> void:
 		if proj.length() < max_air_speed or is_away:
 			var vel_added = wish_dir * air_accel * delta
 
+			# Hud stuff
+			speed_gained.max_value = vel_added.length()
+			speed_lost.max_value = vel_added.length()
+
+			# I don't understand this but it works.. probably
 			vel_added = vel_added.limit_length(
 				max_air_speed + proj.length() * (int(is_away)*2 - 1))
+
+			# Hud stuff
+			speed_gained.value = vel_added.length() * (int(!is_away)*2 - 1)
+			speed_lost.value = vel_added.length() * (int(is_away)*2 - 1)
 
 			self.velocity += vel_added
 
@@ -193,6 +198,12 @@ func _physics_process(delta: float) -> void:
 			hull, "shape:size:y", stand_height, crouch_time)
 		get_tree().create_tween().tween_property(hull, "position",
 			Vector3.ZERO, crouch_time)
+
+
+	var speed: float = snappedf(vel_flat.length(), 0.01)
+	var speed_int_part: float = floorf(speed)
+	speed_label_int.text = str(speed_int_part)
+	speed_label_fract.text = str(floorf((speed - speed_int_part)*100))
 
 
 	if not _coyote_mode:

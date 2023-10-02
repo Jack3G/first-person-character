@@ -1,10 +1,27 @@
-[gd_scene load_steps=4 format=3 uid="uid://umhrr8jsc4c3"]
+[gd_scene load_steps=8 format=3 uid="uid://umhrr8jsc4c3"]
 
 [ext_resource type="Script" path="res://src/player/player.gd" id="1"]
 [ext_resource type="Texture2D" uid="uid://dj33klyiixknq" path="res://assets/crosshair.png" id="2_simyu"]
 
 [sub_resource type="BoxShape3D" id="1"]
 size = Vector3(0.766, 1.296, 0.766)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_82m3o"]
+bg_color = Color(0.160784, 0.160784, 0.160784, 0.0901961)
+border_width_left = 2
+border_color = Color(0.682353, 0.682353, 0.682353, 1)
+expand_margin_left = 2.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xkhfj"]
+bg_color = Color(1, 0.329412, 0.372549, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_n3klp"]
+bg_color = Color(0.160784, 0.160784, 0.160784, 0.0901961)
+border_width_right = 2
+border_color = Color(0.682353, 0.682353, 0.682353, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7nt10"]
+bg_color = Color(0.168627, 0.615686, 1, 1)
 
 [node name="Player" type="CharacterBody3D"]
 floor_snap_length = 0.13
@@ -50,6 +67,43 @@ grow_vertical = 2
 texture = ExtResource("2_simyu")
 expand_mode = 1
 
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -40.0
+offset_top = 20.0
+offset_right = 40.0
+offset_bottom = 26.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 1
+alignment = 1
+
+[node name="SpeedLost" type="ProgressBar" parent="CanvasLayer/HUD/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+theme_override_styles/background = SubResource("StyleBoxFlat_82m3o")
+theme_override_styles/fill = SubResource("StyleBoxFlat_xkhfj")
+value = 58.16
+fill_mode = 1
+show_percentage = false
+
+[node name="SpeedGained" type="ProgressBar" parent="CanvasLayer/HUD/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+theme_override_styles/background = SubResource("StyleBoxFlat_n3klp")
+theme_override_styles/fill = SubResource("StyleBoxFlat_7nt10")
+value = 40.73
+show_percentage = false
+
 [node name="SpeedContainer" type="Control" parent="CanvasLayer/HUD"]
 layout_mode = 1
 anchor_left = 0.5
@@ -57,7 +111,7 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -32.0
-offset_top = 22.0
+offset_top = 26.0
 offset_right = 32.0
 offset_bottom = 50.0
 grow_horizontal = 2
